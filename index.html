@@ -18,26 +18,20 @@
     .tool-icon { font-size: 2em; margin-bottom: 8px; }
     .tool-name { font-size: 1.2em; font-weight: 600; color: #333; }
     .tool-desc { color: #888; font-size: 0.9em; margin-top: 4px; }
-
     .panel { background: white; border-radius: 16px; padding: 24px; display: none; }
     .panel.active { display: block; }
     .panel h2 { font-size: 1.5em; margin-bottom: 8px; }
     .panel .desc { color: #666; margin-bottom: 16px; }
-
     .options { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
     .options label { font-size: 14px; color: #555; display: block; margin-bottom: 4px; }
     .options select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-
     .editor { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     @media (max-width: 700px) { .editor { grid-template-columns: 1fr; } .tools { grid-template-columns: 1fr; } }
-
     .editor-side { display: flex; flex-direction: column; }
     .editor-side label { font-size: 14px; font-weight: 500; color: #555; margin-bottom: 8px; display: flex; justify-content: space-between; }
     .editor-side textarea { flex: 1; min-height: 300px; border: 1px solid #ddd; border-radius: 12px; padding: 16px; font-size: 14px; resize: none; line-height: 1.6; }
     .editor-side textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
     .output-box { flex: 1; min-height: 300px; border: 1px solid #eee; border-radius: 12px; padding: 16px; background: #f8f9fa; font-size: 14px; line-height: 1.6; overflow-y: auto; white-space: pre-wrap; }
-    .output-box.loading { display: flex; align-items: center; justify-content: center; color: #999; }
-
     .actions { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
     .char-count { color: #aaa; font-size: 13px; }
     .btn { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 10px 24px; border-radius: 10px; font-size: 15px; cursor: pointer; font-weight: 500; }
@@ -47,7 +41,6 @@
     .coming-soon { text-align: center; padding: 60px 20px; color: #999; }
     .coming-soon h2 { margin-bottom: 12px; }
     .footer { text-align: center; color: rgba(255,255,255,0.6); font-size: 13px; margin-top: 30px; padding-bottom: 20px; }
-    .error { color: #e74c3c; }
   </style>
 </head>
 <body>
@@ -79,7 +72,6 @@
       </div>
     </div>
 
-    <!-- 论文降重 -->
     <div class="panel active" id="panel-rewrite">
       <h2>📝 AI 论文降重</h2>
       <p class="desc">粘贴你的论文段落，AI 帮你智能改写，降低查重率</p>
@@ -95,20 +87,16 @@
         <div class="editor-side">
           <label><span>原文</span><span class="char-count" id="input-count">0 字</span></label>
           <textarea id="rw-input" placeholder="粘贴需要降重的论文段落..." oninput="updateCount()"></textarea>
-          <div class="actions">
-            <span></span>
-            <button class="btn" id="rw-btn" onclick="doRewrite()">✨ 开始降重</button>
-          </div>
+          <div class="actions"><span></span><button class="btn" id="rw-btn" onclick="doRewrite()">✨ 开始降重</button></div>
         </div>
         <div class="editor-side">
-          <label><span>改写结果</span><span id="copy-area"><button class="btn-copy" onclick="copyResult()" style="display:none" id="copy-btn">📋 复制</button></span></label>
+          <label><span>改写结果</span><button class="btn-copy" onclick="copyResult()" style="display:none" id="copy-btn">📋 复制</button></label>
           <div class="output-box" id="rw-output">改写结果将显示在这里...</div>
           <div class="actions"><span class="char-count" id="output-count"></span></div>
         </div>
       </div>
     </div>
 
-    <!-- 其他工具 -->
     <div class="panel" id="panel-resume"><div class="coming-soon"><h2>📄 简历优化</h2><p>功能即将上线，敬请期待！</p></div></div>
     <div class="panel" id="panel-copywriting"><div class="coming-soon"><h2>🛒 电商文案</h2><p>功能即将上线，敬请期待！</p></div></div>
     <div class="panel" id="panel-contract"><div class="coming-soon"><h2>📋 合同审查</h2><p>功能即将上线，敬请期待！</p></div></div>
@@ -117,75 +105,77 @@
   </div>
 
   <script>
-    const API_URL = 'https://ai-rewrite.3955904069.workers.dev';
-    let useCount = 0;
-    const MAX_FREE = 3;
+    var API_KEY = '44f68541e6c0472d8b4b718309edf419.WokSNjVJRRsPkayQ';
+    var useCount = 0;
+    var MAX_FREE = 3;
 
     function switchTool(name) {
-      document.querySelectorAll('.tool-card').forEach((c,i) => {
-        c.classList.toggle('active', ['rewrite','resume','copywriting','contract'][i] === name);
-      });
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      document.getElementById('panel-' + name).classList.add('active');
+      var cards = document.querySelectorAll('.tool-card');
+      var tools = ['rewrite','resume','copywriting','contract'];
+      for (var i = 0; i < cards.length; i++) {
+        cards[i].className = tools[i] === name ? 'tool-card active' : 'tool-card';
+      }
+      var panels = document.querySelectorAll('.panel');
+      for (var i = 0; i < panels.length; i++) { panels[i].className = 'panel'; }
+      document.getElementById('panel-' + name).className = 'panel active';
     }
 
     function updateCount() {
-      const text = document.getElementById('rw-input').value;
+      var text = document.getElementById('rw-input').value;
       document.getElementById('input-count').textContent = text.length + ' 字';
     }
 
-    const STYLE_MAP = { academic: '学术正式风格，用词严谨，适合论文', natural: '自然流畅风格，像人类写作', simple: '简洁易懂风格，降低复杂度' };
-    const LEVEL_MAP = { light: '轻度改写：保持原文结构，只替换同义词和调整语序', medium: '中度改写：重组句子结构，合并或拆分句子，替换表达方式', heavy: '深度改写：完全重写，保持核心意思但大幅改变表达方式' };
+    var STYLE_MAP = { academic: '学术正式风格，用词严谨，适合论文', natural: '自然流畅风格，像人类写作', simple: '简洁易懂风格，降低复杂度' };
+    var LEVEL_MAP = { light: '轻度改写：保持原文结构，只替换同义词和调整语序', medium: '中度改写：重组句子结构，合并或拆分句子，替换表达方式', heavy: '深度改写：完全重写，保持核心意思但大幅改变表达方式' };
 
-    async function doRewrite() {
-      const text = document.getElementById('rw-input').value.trim();
-      if (text.length < 10) return alert('请输入至少10个字');
-      if (useCount >= MAX_FREE) return alert('今日免费次数已用完，请升级会员');
+    function doRewrite() {
+      var text = document.getElementById('rw-input').value.trim();
+      if (text.length < 10) { alert('请输入至少10个字'); return; }
+      if (useCount >= MAX_FREE) { alert('今日免费次数已用完，请升级会员'); return; }
 
-      const style = document.getElementById('rw-style').value;
-      const level = document.getElementById('rw-level').value;
-      const btn = document.getElementById('rw-btn');
-      const output = document.getElementById('rw-output');
+      var style = document.getElementById('rw-style').value;
+      var level = document.getElementById('rw-level').value;
+      var btn = document.getElementById('rw-btn');
+      var output = document.getElementById('rw-output');
 
       btn.disabled = true;
       btn.textContent = '改写中...';
-      output.className = 'output-box loading';
       output.textContent = '⏳ AI 正在改写...';
 
-      try {
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, style, level })
-        });
+      var prompt = '你是一个专业的论文降重助手。请对以下文本进行改写，降低与原文的相似度，同时保持原意不变。\n\n改写要求：\n- ' + (LEVEL_MAP[level] || LEVEL_MAP.medium) + '\n- 风格：' + (STYLE_MAP[style] || STYLE_MAP.academic) + '\n- 保持专业术语不变\n- 保持逻辑结构清晰\n- 改写后的文本应该与原文意思一致但表达方式明显不同\n- 直接输出改写后的文本，不要加任何解释或前缀\n\n原文：\n' + text;
 
-        const data = await res.json();
-        const result = data.result;
-
+      fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API_KEY },
+        body: JSON.stringify({ model: 'glm-4-flash', messages: [{ role: 'user', content: prompt }], max_tokens: 4000, temperature: 0.8 })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var result = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
         if (result) {
-          output.className = 'output-box';
-          output.textContent = result;
-          document.getElementById('output-count').textContent = result.length + ' 字';
+          output.textContent = result.trim();
+          document.getElementById('output-count').textContent = result.trim().length + ' 字';
           document.getElementById('copy-btn').style.display = 'inline-block';
           useCount++;
         } else {
-          output.className = 'output-box';
-          output.textContent = '❌ ' + (data.error || 'AI未返回结果，请重试');
+          output.textContent = '❌ ' + (data.error && data.error.message || 'AI未返回结果，请重试');
         }
-      } catch (e) {
-        output.className = 'output-box';
+        btn.disabled = false;
+        btn.textContent = '✨ 开始降重';
+      })
+      .catch(function(e) {
         output.textContent = '❌ 网络错误: ' + e.message;
-      }
-
-      btn.disabled = false;
-      btn.textContent = '✨ 开始降重';
+        btn.disabled = false;
+        btn.textContent = '✨ 开始降重';
+      });
     }
 
     function copyResult() {
-      const text = document.getElementById('rw-output').textContent;
-      navigator.clipboard.writeText(text).then(() => {
-        document.getElementById('copy-btn').textContent = '✅ 已复制';
-        setTimeout(() => document.getElementById('copy-btn').textContent = '📋 复制', 2000);
+      var text = document.getElementById('rw-output').textContent;
+      navigator.clipboard.writeText(text).then(function() {
+        var btn = document.getElementById('copy-btn');
+        btn.textContent = '✅ 已复制';
+        setTimeout(function() { btn.textContent = '📋 复制'; }, 2000);
       });
     }
   </script>
