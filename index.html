@@ -117,7 +117,7 @@
   </div>
 
   <script>
-    const ZHIPU_KEY = '44f68541e6c0472d8b4b718309edf419.WokSNjVJRRsPkayQ';
+    const API_URL = 'https://ai-rewrite.3955904069.workers.dev';
     let useCount = 0;
     const MAX_FREE = 3;
 
@@ -166,14 +166,14 @@
 ${text}`;
 
       try {
-        const res = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+        const res = await fetch(API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ZHIPU_KEY },
-          body: JSON.stringify({ model: 'glm-4-flash', messages: [{ role: 'user', content: prompt }], max_tokens: 4000, temperature: 0.8 })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, style, level })
         });
 
         const data = await res.json();
-        const result = data.choices?.[0]?.message?.content?.trim();
+        const result = data.result;
 
         if (result) {
           output.className = 'output-box';
@@ -183,7 +183,7 @@ ${text}`;
           useCount++;
         } else {
           output.className = 'output-box';
-          output.textContent = '❌ ' + (data.error?.message || 'AI未返回结果，请重试');
+          output.textContent = '❌ ' + (data.error || 'AI未返回结果，请重试');
         }
       } catch (e) {
         output.className = 'output-box';
