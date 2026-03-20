@@ -108,7 +108,9 @@
   </div>
 
   <script>
-    var API_KEY = '44f68541e6c0472d8b4b718309edf419.WokSNjVJRRsPkayQ';
+    var API_URL = 'https://ai-rewrite.3955904069.workers.dev';
+
+    // 后端代理调用，API Key 不暴露
     var useCount = 0;
     var MAX_FREE = 3;
 
@@ -147,21 +149,21 @@
 
       var prompt = '你是一个专业的论文降重助手。请对以下文本进行改写，降低与原文的相似度，同时保持原意不变。\n\n改写要求：\n- ' + (LEVEL_MAP[level] || LEVEL_MAP.medium) + '\n- 风格：' + (STYLE_MAP[style] || STYLE_MAP.academic) + '\n- 保持专业术语不变\n- 保持逻辑结构清晰\n- 改写后的文本应该与原文意思一致但表达方式明显不同\n- 直接输出改写后的文本，不要加任何解释或前缀\n\n原文：\n' + text;
 
-      fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+      fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + API_KEY },
-        body: JSON.stringify({ model: 'glm-4-flash', messages: [{ role: 'user', content: prompt }], max_tokens: 4000, temperature: 0.8 })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text, style: style, level: level })
       })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        var result = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+        var result = data.result;
         if (result) {
           output.textContent = result.trim();
           document.getElementById('output-count').textContent = result.trim().length + ' 字';
           document.getElementById('copy-btn').style.display = 'inline-block';
           useCount++;
         } else {
-          output.textContent = '❌ ' + (data.error && data.error.message || 'AI未返回结果，请重试');
+          output.textContent = '❌ ' + (data.error || 'AI未返回结果，请重试');
         }
         btn.disabled = false;
         btn.textContent = '✨ 开始降重';
