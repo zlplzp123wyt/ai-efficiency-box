@@ -152,19 +152,6 @@
       output.className = 'output-box loading';
       output.textContent = '⏳ AI 正在改写...';
 
-      const prompt = `你是一个专业的论文降重助手。请对以下文本进行改写，降低与原文的相似度，同时保持原意不变。
-
-改写要求：
-- ${LEVEL_MAP[level]}
-- 风格：${STYLE_MAP[style]}
-- 保持专业术语不变
-- 保持逻辑结构清晰
-- 改写后的文本应该与原文意思一致但表达方式明显不同
-- 直接输出改写后的文本，不要加任何解释或前缀
-
-原文：
-${text}`;
-
       try {
         const res = await fetch(API_URL, {
           method: 'POST',
