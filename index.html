@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 效率工具箱</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+    .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+    h1 { text-align: center; color: white; font-size: 2em; margin: 30px 0 10px; }
+    .subtitle { text-align: center; color: rgba(255,255,255,0.8); margin-bottom: 30px; }
+    .tools { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 30px; }
+    .tool-card { background: white; border-radius: 16px; padding: 24px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; position: relative; }
+    .tool-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.15); }
+    .tool-card.active { border: 3px solid #667eea; }
+    .tool-card .hot { position: absolute; top: 12px; right: 12px; background: #ff4757; color: white; font-size: 12px; padding: 2px 8px; border-radius: 10px; }
+    .tool-icon { font-size: 2em; margin-bottom: 8px; }
+    .tool-name { font-size: 1.2em; font-weight: 600; color: #333; }
+    .tool-desc { color: #888; font-size: 0.9em; margin-top: 4px; }
+
+    .panel { background: white; border-radius: 16px; padding: 24px; display: none; }
+    .panel.active { display: block; }
+    .panel h2 { font-size: 1.5em; margin-bottom: 8px; }
+    .panel .desc { color: #666; margin-bottom: 16px; }
+
+    .options { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+    .options label { font-size: 14px; color: #555; display: block; margin-bottom: 4px; }
+    .options select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+
+    .editor { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 700px) { .editor { grid-template-columns: 1fr; } .tools { grid-template-columns: 1fr; } }
+
+    .editor-side { display: flex; flex-direction: column; }
+    .editor-side label { font-size: 14px; font-weight: 500; color: #555; margin-bottom: 8px; display: flex; justify-content: space-between; }
+    .editor-side textarea { flex: 1; min-height: 300px; border: 1px solid #ddd; border-radius: 12px; padding: 16px; font-size: 14px; resize: none; line-height: 1.6; }
+    .editor-side textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+    .output-box { flex: 1; min-height: 300px; border: 1px solid #eee; border-radius: 12px; padding: 16px; background: #f8f9fa; font-size: 14px; line-height: 1.6; overflow-y: auto; white-space: pre-wrap; }
+    .output-box.loading { display: flex; align-items: center; justify-content: center; color: #999; }
+
+    .actions { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+    .char-count { color: #aaa; font-size: 13px; }
+    .btn { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 10px 24px; border-radius: 10px; font-size: 15px; cursor: pointer; font-weight: 500; }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-copy { background: #667eea; padding: 6px 14px; font-size: 13px; border-radius: 8px; border: none; color: white; cursor: pointer; }
+    .coming-soon { text-align: center; padding: 60px 20px; color: #999; }
+    .coming-soon h2 { margin-bottom: 12px; }
+    .footer { text-align: center; color: rgba(255,255,255,0.6); font-size: 13px; margin-top: 30px; padding-bottom: 20px; }
+    .error { color: #e74c3c; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🤖 AI 效率工具箱</h1>
+    <p class="subtitle">让 AI 帮你提升效率，节省时间</p>
+
+    <div class="tools">
+      <div class="tool-card active" onclick="switchTool('rewrite')">
+        <span class="hot">🔥 热门</span>
+        <div class="tool-icon">📝</div>
+        <div class="tool-name">论文降重</div>
+        <div class="tool-desc">AI智能改写，降低查重率</div>
+      </div>
+      <div class="tool-card" onclick="switchTool('resume')">
+        <div class="tool-icon">📄</div>
+        <div class="tool-name">简历优化</div>
+        <div class="tool-desc">AI分析简历，一键优化</div>
+      </div>
+      <div class="tool-card" onclick="switchTool('copywriting')">
+        <div class="tool-icon">🛒</div>
+        <div class="tool-name">电商文案</div>
+        <div class="tool-desc">一键生成产品标题和详情</div>
+      </div>
+      <div class="tool-card" onclick="switchTool('contract')">
+        <div class="tool-icon">📋</div>
+        <div class="tool-name">合同审查</div>
+        <div class="tool-desc">AI审查合同条款，标注风险</div>
+      </div>
+    </div>
+
+    <!-- 论文降重 -->
+    <div class="panel active" id="panel-rewrite">
+      <h2>📝 AI 论文降重</h2>
+      <p class="desc">粘贴你的论文段落，AI 帮你智能改写，降低查重率</p>
+      <div class="options">
+        <div><label>改写风格</label>
+          <select id="rw-style"><option value="academic">学术正式</option><option value="natural">自然流畅</option><option value="simple">简洁易懂</option></select>
+        </div>
+        <div><label>改写程度</label>
+          <select id="rw-level"><option value="light">轻度改写</option><option value="medium" selected>中度改写</option><option value="heavy">深度改写</option></select>
+        </div>
+      </div>
+      <div class="editor">
+        <div class="editor-side">
+          <label><span>原文</span><span class="char-count" id="input-count">0 字</span></label>
+          <textarea id="rw-input" placeholder="粘贴需要降重的论文段落..." oninput="updateCount()"></textarea>
+          <div class="actions">
+            <span></span>
+            <button class="btn" id="rw-btn" onclick="doRewrite()">✨ 开始降重</button>
+          </div>
+        </div>
+        <div class="editor-side">
+          <label><span>改写结果</span><span id="copy-area"><button class="btn-copy" onclick="copyResult()" style="display:none" id="copy-btn">📋 复制</button></span></label>
+          <div class="output-box" id="rw-output">改写结果将显示在这里...</div>
+          <div class="actions"><span class="char-count" id="output-count"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 其他工具 -->
+    <div class="panel" id="panel-resume"><div class="coming-soon"><h2>📄 简历优化</h2><p>功能即将上线，敬请期待！</p></div></div>
+    <div class="panel" id="panel-copywriting"><div class="coming-soon"><h2>🛒 电商文案</h2><p>功能即将上线，敬请期待！</p></div></div>
+    <div class="panel" id="panel-contract"><div class="coming-soon"><h2>📋 合同审查</h2><p>功能即将上线，敬请期待！</p></div></div>
+
+    <div class="footer">每日免费使用 3 次 · 升级会员无限使用</div>
+  </div>
+
+  <script>
+    const ZHIPU_KEY = '44f68541e6c0472d8b4b718309edf419.WokSNjVJRRsPkayQ';
+    let useCount = 0;
+    const MAX_FREE = 3;
+
+    function switchTool(name) {
+      document.querySelectorAll('.tool-card').forEach((c,i) => {
+        c.classList.toggle('active', ['rewrite','resume','copywriting','contract'][i] === name);
+      });
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-' + name).classList.add('active');
+    }
+
+    function updateCount() {
+      const text = document.getElementById('rw-input').value;
+      document.getElementById('input-count').textContent = text.length + ' 字';
+    }
+
+    const STYLE_MAP = { academic: '学术正式风格，用词严谨，适合论文', natural: '自然流畅风格，像人类写作', simple: '简洁易懂风格，降低复杂度' };
+    const LEVEL_MAP = { light: '轻度改写：保持原文结构，只替换同义词和调整语序', medium: '中度改写：重组句子结构，合并或拆分句子，替换表达方式', heavy: '深度改写：完全重写，保持核心意思但大幅改变表达方式' };
+
+    async function doRewrite() {
+      const text = document.getElementById('rw-input').value.trim();
+      if (text.length < 10) return alert('请输入至少10个字');
+      if (useCount >= MAX_FREE) return alert('今日免费次数已用完，请升级会员');
+
+      const style = document.getElementById('rw-style').value;
+      const level = document.getElementById('rw-level').value;
+      const btn = document.getElementById('rw-btn');
+      const output = document.getElementById('rw-output');
+
+      btn.disabled = true;
+      btn.textContent = '改写中...';
+      output.className = 'output-box loading';
+      output.textContent = '⏳ AI 正在改写...';
+
+      const prompt = `你是一个专业的论文降重助手。请对以下文本进行改写，降低与原文的相似度，同时保持原意不变。
+
+改写要求：
+- ${LEVEL_MAP[level]}
+- 风格：${STYLE_MAP[style]}
+- 保持专业术语不变
+- 保持逻辑结构清晰
+- 改写后的文本应该与原文意思一致但表达方式明显不同
+- 直接输出改写后的文本，不要加任何解释或前缀
+
+原文：
+${text}`;
+
+      try {
+        const res = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ZHIPU_KEY },
+          body: JSON.stringify({ model: 'glm-4-flash', messages: [{ role: 'user', content: prompt }], max_tokens: 4000, temperature: 0.8 })
+        });
+
+        const data = await res.json();
+        const result = data.choices?.[0]?.message?.content?.trim();
+
+        if (result) {
+          output.className = 'output-box';
+          output.textContent = result;
+          document.getElementById('output-count').textContent = result.length + ' 字';
+          document.getElementById('copy-btn').style.display = 'inline-block';
+          useCount++;
+        } else {
+          output.className = 'output-box';
+          output.textContent = '❌ ' + (data.error?.message || 'AI未返回结果，请重试');
+        }
+      } catch (e) {
+        output.className = 'output-box';
+        output.textContent = '❌ 网络错误: ' + e.message;
+      }
+
+      btn.disabled = false;
+      btn.textContent = '✨ 开始降重';
+    }
+
+    function copyResult() {
+      const text = document.getElementById('rw-output').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        document.getElementById('copy-btn').textContent = '✅ 已复制';
+        setTimeout(() => document.getElementById('copy-btn').textContent = '📋 复制', 2000);
+      });
+    }
+  </script>
+</body>
+</html>
