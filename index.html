@@ -367,17 +367,29 @@
       document.getElementById('upgrade-modal').style.display = 'none';
     }
     
-    function upgrade(plan) {
-      // 跳转到支付页面（这里使用面包多示例链接）
-      var paymentUrls = {
-        'monthly': 'https://www.mianbaoduo.com/item/123456',
-        'yearly': 'https://www.mianbaoduo.com/item/123457',
-        'lifetime': 'https://www.mianbaoduo.com/item/123458'
-      };
-      
-      // 实际项目中，这里应该调用后端API创建订单，然后跳转
-      alert('即将跳转到支付页面...\n实际项目中需要集成支付网关');
-      // window.location.href = paymentUrls[plan];
+    async function upgrade(plan) {
+      // 调用后端API创建支付订单
+      try {
+        const response = await fetch('https://ai-tools-hub-production-acac.up.railway.app/api/payment/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            plan: plan,
+            userId: 'user_' + Date.now() // 实际项目中应该是真实用户ID
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // 跳转到支付页面
+          window.location.href = data.paymentUrl;
+        } else {
+          alert('创建支付订单失败：' + (data.error || '未知错误'));
+        }
+      } catch (error) {
+        alert('网络错误：' + error.message);
+      }
     }
     
     function doRewrite() {
