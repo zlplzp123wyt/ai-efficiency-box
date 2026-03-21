@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+  <rect width="200" height="200" fill="#f0f0f0"/>
+  <text x="100" y="90" text-anchor="middle" font-size="16" fill="#333">年卡 99元</text>
+  <text x="100" y="115" text-anchor="middle" font-size="12" fill="#999">请上传收款码</text>
+</svg>
