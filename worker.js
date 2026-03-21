@@ -16,26 +16,29 @@ export default {
 
     try {
       const body = await request.json();
+      const tool = body.tool || 'rewrite';
       const text = body.text;
-      const style = body.style || 'academic';
-      const level = body.level || 'medium';
 
       if (!text || text.length < 10) {
         return new Response(JSON.stringify({ error: '请输入至少10个字' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
-      const STYLE_MAP = {
-        academic: '学术正式风格，用词严谨，适合论文',
-        natural: '自然流畅风格，像人类写作',
-        simple: '简洁易懂风格，降低复杂度',
-      };
-      const LEVEL_MAP = {
-        light: '轻度改写：保持原文结构，只替换同义词和调整语序',
-        medium: '中度改写：重组句子结构，合并或拆分句子，替换表达方式',
-        heavy: '深度改写：完全重写，保持核心意思但大幅改变表达方式',
-      };
+      let prompt;
 
-      const prompt = `你是一个专业的论文降重助手。请对以下文本进行改写，降低与原文的相似度，同时保持原意不变。
+      if (tool === 'rewrite') {
+        const style = body.style || 'academic';
+        const level = body.level || 'medium';
+        const STYLE_MAP = {
+          academic: '学术正式风格，用词严谨，适合论文',
+          natural: '自然流畅风格，像人类写作',
+          simple: '简洁易懂风格，降低复杂度',
+        };
+        const LEVEL_MAP = {
+          light: '轻度改写：保持原文结构，只替换同义词和调整语序',
+          medium: '中度改写：重组句子结构，合并或拆分句子，替换表达方式',
+          heavy: '深度改写：完全重写，保持核心意思但大幅改变表达方式',
+        };
+        prompt = `你是一个专业的论文降重助手。请对以下文本进行改写，降低与原文的相似度，同时保持原意不变。
 
 改写要求：
 - ${LEVEL_MAP[level] || LEVEL_MAP.medium}
@@ -47,6 +50,104 @@ export default {
 
 原文：
 ${text}`;
+
+      } else if (tool === 'resume') {
+        const jobTarget = body.jobTarget || '';
+        const resumeStyle = body.resumeStyle || 'professional';
+        const STYLE_MAP = {
+          professional: '专业稳重，适合金融/法律/咨询等行业',
+          creative: '创意活泼，适合设计/营销/互联网行业',
+          academic: '学术研究，适合高校/科研机构',
+        };
+        prompt = `你是一位资深HR和职业规划师。请对以下简历内容进行优化，使其更具竞争力。
+
+优化方向：
+- 目标岗位：${jobTarget || '通用'}
+- 风格：${STYLE_MAP[resumeStyle] || STYLE_MAP.professional}
+
+优化要求：
+1. 使用STAR法则（情境-任务-行动-结果）重写工作经历
+2. 量化成果（用数据说话，如"提升30%"、"管理5人团队"）
+3. 突出与目标岗位匹配的关键词
+4. 精简冗余描述，每条经历控制在2-3行
+5. 如果有明显的短板，给出改善建议
+6. 直接输出优化后的简历内容，格式清晰
+7. 最后给出3-5条具体的改善建议
+
+简历内容：
+${text}`;
+
+      } else if (tool === 'copywriting') {
+        const platform = body.platform || 'taobao';
+        const copyType = body.copyType || 'title';
+        const PLAT_MAP = {
+          taobao: '淘宝/天猫',
+          douyin: '抖音',
+          xiaohongshu: '小红书',
+          pinduoduo: '拼多多',
+        };
+        const TYPE_MAP = {
+          title: '标题',
+          detail: '详情页文案',
+          both: '标题+详情页文案',
+        };
+        prompt = `你是一位资深电商文案专家，精通各平台的文案风格和算法推荐机制。
+
+请根据以下产品信息，生成${PLAT_MAP[platform]}平台的${TYPE_MAP[copyType]}。
+
+平台特点要求：
+- 淘宝/天猫：标题含关键词、卖点前置、30字以内
+- 抖音：口语化、有冲击力、前3秒抓眼球、适合短视频口播
+- 小红书：种草风格、有真实感、适当用emoji、标题带数字或对比
+- 拼多多：突出低价/性价比、简单直接、强调优惠
+
+文案要求：
+1. 标题要吸引点击，包含核心卖点
+2. 详情文案要有逻辑：痛点→解决方案→产品优势→使用场景→促销信息
+3. 语言要符合目标平台用户的阅读习惯
+4. 如果是标题，给出3个备选方案
+5. 用---分隔不同部分
+
+产品信息：
+${text}`;
+
+      } else if (tool === 'contract') {
+        const contractType = body.contractType || 'general';
+        const CHECK_MAP = {
+          general: '通用合同审查',
+          labor: '劳动合同审查（重点关注竞业限制、试用期、加班条款）',
+          rental: '租赁合同审查（重点关注押金、维修责任、退租条款）',
+          cooperation: '合作协议审查（重点关注知识产权、违约责任、分成比例）',
+        };
+        prompt = `你是一位资深法务顾问，精通中国合同法和相关法规。请对以下合同内容进行审查。
+
+审查类型：${CHECK_MAP[contractType] || CHECK_MAP.general}
+
+审查要求：
+1. 逐条分析合同条款，标注风险等级（🔴高风险 🟡中风险 🟢低风险）
+2. 找出缺失的保护性条款
+3. 检查是否有不公平的格式条款
+4. 给出修改建议（用具体的替换措辞）
+5. 总结：列出前3大风险和建议
+
+输出格式：
+## 合同审查报告
+
+### 条款逐一审查
+（逐条列出，格式：条款内容 → 风险等级 → 分析 → 修改建议）
+
+### 缺失条款提醒
+（列出应该有但缺失的条款）
+
+### 总结与建议
+（前3大风险 + 总体建议）
+
+合同内容：
+${text}`;
+
+      } else {
+        return new Response(JSON.stringify({ error: '未知工具类型' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
 
       const apiKey = env.ZHIPU_API_KEY;
 
