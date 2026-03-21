@@ -198,7 +198,8 @@
   </div>
 
   <script>
-    var API_URL = 'https://ai-tools-mqpi3w2de-zlplzp123wyts-projects.vercel.app';
+    var API_BASE_URL = 'https://ai-tools-hub-production-acac.up.railway.app';
+    var API_URL = API_BASE_URL + '/api/';
     var useCount = 0;
     var MAX_FREE = 3;
 
@@ -237,7 +238,9 @@
       btn.textContent = '⏳ 处理中...';
       output.textContent = '⏳ AI 正在思考，请稍候...';
 
-      fetch(API_URL, {
+      var endpoint = API_URL + (body.tool || 'rewrite');
+      delete body.tool; // Remove tool property from request body
+      fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
