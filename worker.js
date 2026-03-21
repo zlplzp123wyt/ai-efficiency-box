@@ -16,7 +16,7 @@ export default {
 
     try {
       const body = await request.json();
-      const tool = body.tool || 'rewrite';
+      const tool = body.type || body.tool || 'rewrite';
       const text = body.text;
 
       if (!text || text.length < 10) {
@@ -52,18 +52,18 @@ export default {
 ${text}`;
 
       } else if (tool === 'resume') {
-        const jobTarget = body.jobTarget || '';
-        const resumeStyle = body.resumeStyle || 'professional';
+        const targetJob = body.jobTarget || body.targetJob || '';
+        const style = body.resumeStyle || body.style || 'professional';
         const STYLE_MAP = {
           professional: '专业稳重，适合金融/法律/咨询等行业',
           creative: '创意活泼，适合设计/营销/互联网行业',
-          academic: '学术研究，适合高校/科研机构',
+          concise: '简洁精炼，适合技术岗/工程岗',
         };
         prompt = `你是一位资深HR和职业规划师。请对以下简历内容进行优化，使其更具竞争力。
 
 优化方向：
-- 目标岗位：${jobTarget || '通用'}
-- 风格：${STYLE_MAP[resumeStyle] || STYLE_MAP.professional}
+- 目标岗位：${targetJob || '通用'}
+- 风格：${STYLE_MAP[style] || STYLE_MAP.professional}
 
 优化要求：
 1. 使用STAR法则（情境-任务-行动-结果）重写工作经历
@@ -79,74 +79,58 @@ ${text}`;
 
       } else if (tool === 'copywriting') {
         const platform = body.platform || 'taobao';
-        const copyType = body.copyType || 'title';
+        const type = body.type || 'all';
         const PLAT_MAP = {
           taobao: '淘宝/天猫',
-          douyin: '抖音',
+          douyin: '抖音/短视频',
           xiaohongshu: '小红书',
-          pinduoduo: '拼多多',
+          wechat: '微信/朋友圈',
         };
-        const TYPE_MAP = {
-          title: '标题',
-          detail: '详情页文案',
-          both: '标题+详情页文案',
-        };
-        prompt = `你是一位资深电商文案专家，精通各平台的文案风格和算法推荐机制。
+        prompt = `你是一位资深电商文案专家，精通各平台的文案风格和算法推荐机制。请根据以下产品信息，生成${PLAT_MAP[platform]}平台的文案。
 
-请根据以下产品信息，生成${PLAT_MAP[platform]}平台的${TYPE_MAP[copyType]}。
-
-平台特点要求：
+平台风格要求：
 - 淘宝/天猫：标题含关键词、卖点前置、30字以内
-- 抖音：口语化、有冲击力、前3秒抓眼球、适合短视频口播
+- 抖音/短视频：口语化、有冲击力、前3秒抓眼球、适合短视频口播
 - 小红书：种草风格、有真实感、适当用emoji、标题带数字或对比
-- 拼多多：突出低价/性价比、简单直接、强调优惠
+- 微信/朋友圈：简洁精致、有调性、适合熟人社交传播
 
-文案要求：
-1. 标题要吸引点击，包含核心卖点
-2. 详情文案要有逻辑：痛点→解决方案→产品优势→使用场景→促销信息
-3. 语言要符合目标平台用户的阅读习惯
-4. 如果是标题，给出3个备选方案
-5. 用---分隔不同部分
+请输出以下内容（用##标题分隔）：
+1. ## 产品标题（3个备选方案）
+2. ## 详情描述（卖点+场景+促销，200字左右）
+3. ## 推广软文（适合发社交媒体，100字左右）
 
 产品信息：
 ${text}`;
 
       } else if (tool === 'contract') {
-        const contractType = body.contractType || 'general';
-        const CHECK_MAP = {
-          general: '通用合同审查',
-          labor: '劳动合同审查（重点关注竞业限制、试用期、加班条款）',
-          rental: '租赁合同审查（重点关注押金、维修责任、退租条款）',
-          cooperation: '合作协议审查（重点关注知识产权、违约责任、分成比例）',
+        const focus = body.focusArea || 'complete';
+        const FOCUS_MAP = {
+          complete: '全面审查（法律风险+条款公平性+缺失条款）',
+          risk: '重点审查法律风险（违约责任、争议解决、免责条款）',
+          fair: '重点审查条款公平性（权利义务对等、格式条款识别）',
         };
         prompt = `你是一位资深法务顾问，精通中国合同法和相关法规。请对以下合同内容进行审查。
 
-审查类型：${CHECK_MAP[contractType] || CHECK_MAP.general}
+审查重点：${FOCUS_MAP[focus] || FOCUS_MAP.complete}
 
-审查要求：
-1. 逐条分析合同条款，标注风险等级（🔴高风险 🟡中风险 🟢低风险）
-2. 找出缺失的保护性条款
-3. 检查是否有不公平的格式条款
-4. 给出修改建议（用具体的替换措辞）
-5. 总结：列出前3大风险和建议
+请按以下格式输出审查报告：
 
-输出格式：
-## 合同审查报告
+## 📋 合同审查报告
 
-### 条款逐一审查
-（逐条列出，格式：条款内容 → 风险等级 → 分析 → 修改建议）
+### 🔍 条款逐一审查
+对每条关键条款：标注风险等级（🔴高风险 🟡中风险 🟢低风险），分析问题，给出修改建议
 
-### 缺失条款提醒
-（列出应该有但缺失的条款）
+### ⚠️ 缺失条款提醒
+列出应该有但缺失的保护性条款
 
-### 总结与建议
-（前3大风险 + 总体建议）
+### 📊 风险总结
+列出前3大风险，给出总体建议
 
 合同内容：
 ${text}`;
 
       } else {
-        return new Response(JSON.stringify({ error: '未知工具类型' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ error: '未知工具类型: ' + tool }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
       const apiKey = env.ZHIPU_API_KEY;
