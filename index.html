@@ -238,25 +238,102 @@
       btn.textContent = '⏳ 处理中...';
       output.textContent = '⏳ AI 正在思考，请稍候...';
 
-      var endpoint = API_URL + (body.tool || 'rewrite');
-      delete body.tool; // Remove tool property from request body
+      var tool = body.tool || 'rewrite';
+      var endpoint = API_URL + tool;
+      
+      // 检查是否使用流式API（论文降重使用流式）
+      var useStreaming = tool === 'rewrite';
+      var streamEndpoint = useStreaming ? API_BASE_URL + '/api/rewrite/stream' : endpoint;
+      
+      // 删除tool属性，因为后端不需要
+      delete body.tool;
+      
+      if (useStreaming) {
+        // 流式调用
+        callStreamingAPI(streamEndpoint, body, btn, output, outputCountId, copyId, origText);
+      } else {
+        // 普通调用
+        fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.result) {
+            output.textContent = data.result.trim();
+            document.getElementById(outputCountId).textContent = data.result.trim().length + ' 字';
+            document.getElementById(copyId).style.display = 'inline-block';
+            useCount++;
+          } else {
+            output.textContent = '❌ ' + (data.error || 'AI未返回结果，请重试');
+          }
+          btn.disabled = false;
+          btn.textContent = origText;
+        })
+        .catch(function(e) {
+          output.textContent = '❌ 网络错误: ' + e.message;
+          btn.disabled = false;
+          btn.textContent = origText;
+        });
+      }
+    }
+
+    function callStreamingAPI(endpoint, body, btn, output, outputCountId, copyId, origText) {
       fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.result) {
-          output.textContent = data.result.trim();
-          document.getElementById(outputCountId).textContent = data.result.trim().length + ' 字';
-          document.getElementById(copyId).style.display = 'inline-block';
-          useCount++;
-        } else {
-          output.textContent = '❌ ' + (data.error || 'AI未返回结果，请重试');
+      .then(function(response) {
+        var reader = response.body.getReader();
+        var decoder = new TextDecoder();
+        var resultText = '';
+        
+        function readStream() {
+          return reader.read().then(function({ done, value }) {
+            if (done) {
+              // 流式结束
+              output.textContent = resultText.trim();
+              document.getElementById(outputCountId).textContent = resultText.trim().length + ' 字';
+              document.getElementById(copyId).style.display = 'inline-block';
+              useCount++;
+              btn.disabled = false;
+              btn.textContent = origText;
+              return;
+            }
+            
+            var chunk = decoder.decode(value);
+            var lines = chunk.split('\n');
+            
+            for (var line of lines) {
+              if (line.trim() === '') continue;
+              try {
+                var data = JSON.parse(line);
+                if (data.type === 'progress') {
+                  output.textContent = '⏳ ' + data.message;
+                } else if (data.type === 'chunk') {
+                  resultText += data.data;
+                  output.textContent = resultText;
+                } else if (data.type === 'result') {
+                  resultText = data.data;
+                  output.textContent = resultText.trim();
+                } else if (data.type === 'error') {
+                  output.textContent = '❌ ' + data.data;
+                  btn.disabled = false;
+                  btn.textContent = origText;
+                  return;
+                }
+              } catch (e) {
+                // 忽略解析错误
+              }
+            }
+            
+            return readStream();
+          });
         }
-        btn.disabled = false;
-        btn.textContent = origText;
+        
+        return readStream();
       })
       .catch(function(e) {
         output.textContent = '❌ 网络错误: ' + e.message;
