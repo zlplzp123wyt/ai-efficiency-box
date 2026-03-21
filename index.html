@@ -204,6 +204,9 @@
         
         <div id="plan-select">
           <div style="display:flex; gap:10px; margin:20px 0;">
+            <button onclick="selectPlan('single')" class="plan-btn" id="plan-single" style="flex:1;padding:12px;border:2px solid #ddd;border-radius:12px;background:white;cursor:pointer;font-size:14px;">
+              <b>单次</b><br><span style="font-size:20px;">5</span>元/次
+            </button>
             <button onclick="selectPlan('monthly')" class="plan-btn" id="plan-monthly" style="flex:1;padding:12px;border:2px solid #667eea;border-radius:12px;background:#667eea;color:white;cursor:pointer;font-size:14px;">
               <b>月卡</b><br><span style="font-size:20px;">9.9</span>元/月
             </button>
@@ -430,10 +433,12 @@
 
     var selectedPlan = 'monthly';
     var QR_BASE_URL = 'https://raw.githubusercontent.com/zlplzp123wyt/ai-efficiency-box/gh-pages/qr-codes/';
+    var PLAN_LABELS = { single:'5元/次', monthly:'月卡9.9元', yearly:'年卡99元', lifetime:'终身199元' };
+    var QR_EXT = '.jpg';
 
     function selectPlan(plan) {
       selectedPlan = plan;
-      ['monthly','yearly','lifetime'].forEach(function(p) {
+      ['single','monthly','yearly','lifetime'].forEach(function(p) {
         var btn = document.getElementById('plan-' + p);
         if (p === plan) {
           btn.style.border = '2px solid #667eea';
@@ -445,7 +450,7 @@
           btn.style.color = 'black';
         }
       });
-      document.getElementById('qr-image').src = QR_BASE_URL + plan + '.svg';
+      document.getElementById('qr-image').src = QR_BASE_URL + plan + QR_EXT;
     }
 
     async function submitPayment() {
