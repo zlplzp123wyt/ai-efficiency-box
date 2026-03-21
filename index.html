@@ -193,7 +193,24 @@
 
     <div class="footer">
       <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-      今日免费使用 3 次 · 升级会员无限使用 · 总访问 <span id="busuanzi_value_site_pv">0</span> 次
+      <span id="user-status">今日免费使用 3 次 · <a href="#" onclick="showUpgrade()">升级会员无限使用</a></span> · 总访问 <span id="busuanzi_value_site_pv">0</span> 次
+    </div>
+    
+    <!-- 升级会员弹窗 -->
+    <div id="upgrade-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+      <div style="background:white; margin:100px auto; padding:30px; width:400px; border-radius:16px;">
+        <h2>升级会员</h2>
+        <p>解锁无限使用次数和高级功能</p>
+        <div style="margin:20px 0;">
+          <p>月费会员：9.9元/月</p>
+          <p>年费会员：99元/年</p>
+          <p>终身会员：199元</p>
+        </div>
+        <button onclick="upgrade('monthly')">月费会员 (9.9元)</button>
+        <button onclick="upgrade('yearly')">年费会员 (99元)</button>
+        <button onclick="upgrade('lifetime')">终身会员 (199元)</button>
+        <button onclick="closeUpgrade()">取消</button>
+      </div>
     </div>
   </div>
 
@@ -342,6 +359,27 @@
       });
     }
 
+    function showUpgrade() {
+      document.getElementById('upgrade-modal').style.display = 'block';
+    }
+    
+    function closeUpgrade() {
+      document.getElementById('upgrade-modal').style.display = 'none';
+    }
+    
+    function upgrade(plan) {
+      // 跳转到支付页面（这里使用面包多示例链接）
+      var paymentUrls = {
+        'monthly': 'https://www.mianbaoduo.com/item/123456',
+        'yearly': 'https://www.mianbaoduo.com/item/123457',
+        'lifetime': 'https://www.mianbaoduo.com/item/123458'
+      };
+      
+      // 实际项目中，这里应该调用后端API创建订单，然后跳转
+      alert('即将跳转到支付页面...\n实际项目中需要集成支付网关');
+      // window.location.href = paymentUrls[plan];
+    }
+    
     function doRewrite() {
       var text = document.getElementById('rw-input').value.trim();
       if (text.length < 10) { alert('请输入至少10个字'); return; }
